@@ -40,7 +40,9 @@ third = [ c1, c2, c3 ]
 
 
 ConfusionMatrix =  [ first; second; third ] 
-
+figure(1)
+confusionchart(ConfusionMatrix)
+title("2a")
 %% Estimating mu and variance 
 
 estMu_1 = [ sum(train_1(:, 1)), sum(train_1(:,2)) ] / size(train_1,1) 
@@ -69,7 +71,53 @@ third = [ c1, c2, c3 ]
 
 
 ConfusionMatrix2 =  [ first; second; third ] 
+figure(2)
+confusionchart(ConfusionMatrix2)
+title("2b Estimated mu and Sigma ")
+%% 2 c 
+
+[c1, c2, c3 ] =  classifyParsenWindow(test_1(:,1:2), train_1(:,1:2), train_2(:,1:2), train_3(:,1:2), 1, 2) 
+
+first =  [c1, c2, c3 ]
+
+[c1, c2, c3 ] =  classifyParsenWindow(test_2(:,1:2), train_1(:,1:2), train_2(:,1:2), train_3(:,1:2), 1, 2) 
+
+second =  [c1, c2, c3 ]
+
+[c1, c2, c3 ] =  classifyParsenWindow(test_3(:,1:2), train_1(:,1:2), train_2(:,1:2), train_3(:,1:2), 1, 2) 
+
+third =  [c1, c2, c3 ]
+
+
+ConfusionMatrix3 =  [ first; second; third ] 
+figure(3)
+confusionchart(ConfusionMatrix3)
+
+%% 2d k-nearest 
+
+
 %%
+function [c1, c2, c3 ] =  classifyParsenWindow(test, x1, x2, x3, h, d)
+   c1 = 0
+   c2 = 0
+   c3 = 0
+  for i =1:size(test,1)
+      [y1, y2, y3 ] = parsenWindow(test(i,1:2), x1, x2, x3, h, d)  
+      
+      if y1 == max( [y1, y2, y3] )
+          c1 = c1 +  1
+      end
+      
+      if y2 == max( [y1, y2, y3] )
+          c2 = c2 +  1
+      end
+      
+      if y3 == max( [y1, y2, y3] )
+          c3 = c3 + 1
+      end
+  end 
+end
+
 function [c1, c2, c3] = classify( data, mu, var_1, var_2, var_3 )
   
   y1 = mvnpdf(data,  mu(1,:), var_1)
@@ -109,3 +157,24 @@ function sigma =  estimate_sigma( data, mu )
     sigma = trans*diff
     sigma = 1/m *sigma 
 end
+
+
+function [result1, reuslt2, result3 ] = parsenWindow(test, x1, x2, x3, h, d)
+    
+    result1 = 0 
+    reuslt2 = 0 
+    result3 = 0
+    sigma = h^2*eye(d,d)
+    for i=1:length(x1)
+        result1 = result1 + gaussianKernel( sigma, test, x1(i,1:2),d) 
+        reuslt2 = reuslt2 + gaussianKernel( sigma, test, x2(i,1:2),d) 
+        result3 = result3 + gaussianKernel( sigma, test, x3(i,1:2),d) 
+    end 
+    
+end
+
+function gauss = gaussianKernel(Sigma, x, xi,d)
+    SigmaDet = det(Sigma)
+    SigmaInv = inv(Sigma)
+    gauss =  (1/((2*pi)^(d/2)*sqrt(SigmaDet)))*exp(-0.5*(x-xi)*SigmaInv*(x-xi)')
+end 
