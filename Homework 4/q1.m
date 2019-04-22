@@ -1,49 +1,35 @@
-dist1 = makedist('Normal', 20, 5) 
-random1 = random(dist1, 1, 100)
 
-dist2 = makedist('Normal', 35, 5) 
-random2 = random(dist1, 1, 100)
+mu_1= 20;
+mu_2=35;
+sig_1=sqrt(5);
+sig_2=sqrt(5);
+rng('default')
+rng(1);
+N = 1000;
+random1 = sig_1 .* randn(N, 1) + mu_1;
+random2 = sig_2 .* randn(N, 1) + mu_2;
 
-randomNumbs = [ random1 , random2 ]
+randomNumbs = [ random1' , random2' ]
 
-result = zeros(1, 200 )
+result = zeros(1, 2000 )
 randomNumbs = sort(randomNumbs)
-h = [ 0.01 0.1 1 10 20 100 ] 
+h = [ 0.01 0.1 1 10]
 
 densities = [0:1:55] 
 
-
-
-for j=1:6
+for j=1:4
     for i = 1:55
-       pn = gauss_parzen_window_dens(h(j), randomNumbs, densities(i))
-       result(i) = pn 
+       result(i) = parzen_window_estimation(h(j), i, randomNumbs, 2)
     end 
     figure(j) 
-    plot( randomNumbs, result, 'r.', 'LineStyle', '-')
+    plot( randomNumbs, result, 'g.', 'LineStyle', '-')
     title("h=" + h(j)) 
 end 
 
-
-function [y] = gaussian_kernel(u)
-  [d,n] = size(u);
-  y=zeros(1,n);
-  for i=1:n
-    y(i) = gaussian(u(:,i));
-  end
+function p = parzen_window_estimation(h, x, xi, d)
+    n = length(xi) 
+    hn = h^d 
+    
+    phi =  (1/sqrt(2*pi*hn))*exp(-0.5*((x*ones(1,n)-xi)/h).^2)
+    p = sum(phi)/(hn*n)
 end
-
- 
-function [y] = gaussian(u)
-  u=u(:);
-  d = length(u);
-  y = exp(-(u'*u)/2)/((2*pi)^(d/2));
-end
-
-function [pn] = gauss_parzen_window_dens(h, u, v)
-  [d, n] = size (u);
-  hn=h/sqrt(n);
-  phi = gaussian_kernel(( v*ones(1,n) - u)/hn)
-  pn = sum(phi)/(hn);
-end
- 
